@@ -69,6 +69,7 @@ New-Item -ItemType Directory -Force $dist | Out-Null
 Copy-Item $exe (Join-Path $dist 'xmr-verify-proxy.exe') -Force
 Copy-Item (Join-Path $root 'config.example.json') (Join-Path $dist 'config.example.json') -Force
 Copy-Item (Join-Path $root 'README.md') (Join-Path $dist 'README.md') -Force -ErrorAction SilentlyContinue
+Copy-Item (Join-Path $root 'run.bat') (Join-Path $dist 'run.bat') -Force
 
 Write-Host ""
 Write-Host "== done ==" -ForegroundColor Green
@@ -76,4 +77,4 @@ Get-Item $exe | Select-Object FullName, Length, LastWriteTime | Format-List
 Write-Host "packaged: dist\xmr-verify-proxy.exe" -ForegroundColor Green
 Write-Host ""
 Write-Host "self-check:  .\dist\xmr-verify-proxy.exe selftest --vectors tests\data\submit-vectors.json"
-Write-Host "run:         .\dist\xmr-verify-proxy.exe run --config config.json"
+Write-Host "run:         .\dist\run.bat        (or: .\dist\xmr-verify-proxy.exe run --config config.json)"

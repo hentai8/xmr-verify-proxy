@@ -63,21 +63,50 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 
 ### 运行
 
-```powershell
-copy config.example.json config.json
-notepad config.json          # 改 upstream 和 listen
-.\dist\xmr-verify-proxy.exe run --config config.json
+把 `dist\` 整个目录拷到目标机器即可，它自带 exe、`config.example.json`、`run.bat` 和本文档。
+
+最简单的方式是双击 `run.bat`（首次会自动从 `config.example.json` 生成 `config.json`）：
+
+1. 先编辑 `config.json` 里的两项：
+
+```json
+{
+  "listen": "0.0.0.0:3333",                 // 矿机连这个地址
+  "upstream": "xmr.kryptex.network:7029"    // 你的矿池
+}
 ```
 
-或者不写配置文件，命令行直接给：
+2. 双击 `run.bat`，或命令行：
 
 ```powershell
-.\dist\xmr-verify-proxy.exe run --upstream xmr.kryptex.network:7029 --listen 0.0.0.0:3333
+cd dist
+copy config.example.json config.json      # 首次
+notepad config.json                       # 改 listen / upstream
+.\xmr-verify-proxy.exe run --config config.json
 ```
 
-然后把矿机指向 `你的IP:3333`，worker/pass 保持原样（代理不改写 login）。
+也可以完全不用配置文件：
 
-状态页默认在 `http://127.0.0.1:3356/`，每 2 秒刷新；JSON 在 `/api/stats`。
+```powershell
+.\xmr-verify-proxy.exe run --upstream xmr.kryptex.network:7029 --listen 0.0.0.0:3333
+```
+
+3. 把矿机的池地址改成 `这台机器的IP:3333`，worker / 密码保持原样（代理不改写 login）。
+
+启动后会打印一行 `ready - point your miner at ...`，看到这行就说明在跑了。
+
+**防火墙**：如果用 `0.0.0.0:3333`（供局域网其他机器连），首次启动 Windows 会弹窗询问是否允许
+网络访问，选"专用网络"允许即可；没弹的话手动加一条入站规则：
+
+```powershell
+# 管理员 PowerShell
+New-NetFirewallRule -DisplayName "xmr-verify-proxy" -Direction Inbound -Protocol TCP -LocalPort 3333 -Action Allow -Profile Private
+```
+
+只让本机矿机连的话，把 `listen` 改成 `127.0.0.1:3333`，就不会有防火墙弹窗。
+
+**监控**：状态页 `http://127.0.0.1:3356/`（每 2 秒刷新），JSON 在 `/api/stats`。只监听本机回环，
+不对外暴露；要从别的机器看就改成 `0.0.0.0:3356`。
 
 ## 校验能力实测
 
