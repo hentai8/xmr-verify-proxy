@@ -240,9 +240,13 @@ powershell -ExecutionPolicy Bypass -File .\tests\run-tests.ps1
 需要把程序所在目录加进 Defender 排除列表：
 
 ```powershell
-# 管理员 PowerShell
 powershell -ExecutionPolicy Bypass -File .\scripts\allow-defender.ps1
+# 加上 -WithXmrig 会顺带下载官方 XMRig、校验 SHA256 并确认它没被删掉
 ```
+
+脚本会自己申请管理员权限，然后**逐条回读**确认排除项真的生效。注意 **Tamper Protection 打开时**，
+用脚本/PowerShell 修改排除项通常会被静默忽略 —— 这种脚本会直接提示你改走 Windows 安全中心的
+「病毒和威胁防护 → 管理设置 → 排除项」，把项目目录和 `xmrig.exe`、`xmr-verify-proxy.exe` 加进去。
 
 撤回：`Remove-MpPreference -ExclusionPath '<项目目录>'`
 
