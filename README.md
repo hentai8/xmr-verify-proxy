@@ -218,17 +218,17 @@ powershell -ExecutionPolicy Bypass -File .\tests\run-tests.ps1
 
 在真实矿池 `xmr.kryptex.network:7029` 上验证过的：
 
-- 4 个矿机并发连接各自独立转发，互不影响
-- 挖出真 share 经代理校验（3.48 ms）后被矿池接受 `OK`
-- 三类非法 share 全部在本地拦下，矿池侧无记录
-- 难度调整（400015 → 200007 → 100001）期间 job 正常跟随
+- **官方 XMRig 6.27.0 实测**：`xmrig -o 127.0.0.1:3333 -a rx/0 -t 8 -k --randomx-mode=fast`，
+  连续挖矿期间 5 个 share 全部经代理校验（5.4–6.3 ms）转发，矿池全部接受，代理侧
+  `seen=5 forwarded=5 poolAccepted=5 blocked=0`。
+- XMRig 背靠背提交（两条 submit 间隔 155 ms）也能分别校验、分别接受，说明校验不会互相阻塞。
+- 4 个矿机并发连接各自独立转发，互不影响。
+- 仓库内置测试矿工挖出的真 share（diff 203319）被矿池接受。
+- 三类非法 share 全部在本地拦下，矿池侧无记录。
+- 难度调整（400015 → 200007 → 100001）期间 job 正常跟随。
 
 **没有**验证过的：
 
-- 用官方 XMRig 客户端实测。本机 Defender 判定 `xmrig.exe` 为
-  `Trojan:Win64/DisguisedXMRigMiner` 并直接删除，无法在本机运行。端到端测试用的是仓库内置的
-  测试矿工——它按抓包格式完整实现了 `login`/`submit`/`keepalived`，挖的是真 RandomX share，
-  但毕竟不是 XMRig 本身。
 - seed 切换（`next_seed_hash` 非空的真实切换场景）。数据集预热逻辑写了，但抓包期间矿池没给过
   `next_seed_hash`，只能用假矿池构造。
 - 长时间稳定性（数天连续运行、内存增长）。
@@ -249,6 +249,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\allow-defender.ps1
 「病毒和威胁防护 → 管理设置 → 排除项」，把项目目录和 `xmrig.exe`、`xmr-verify-proxy.exe` 加进去。
 
 撤回：`Remove-MpPreference -ExclusionPath '<项目目录>'`
+
+**第二款杀软**：如果机器上还装了火绒 / 360 之类，Defender 排除项对它无效。典型症状是文件
+**能落地、一执行就消失**，而 Defender 里查不到任何检测记录（本机实测就是这个情况，元凶是
+联想版火绒的 HIPS）。解决方法是把项目目录加进那款软件的信任区（火绒：防护中心 → 信任区 →
+添加目录）。判据：往项目目录写一个 EICAR 测试文件，如果它没被删，说明该目录没在文件扫描范围内，
+删除只发生在执行时，属于 HIPS 行为拦截。
 
 **内存**：fast mode 常驻约 2.3 GiB；`prebuildNextSeed` 打开时峰值约 4.6 GiB。内存吃紧就把
 `fastMode` 或 `prebuildNextSeed` 关掉。
