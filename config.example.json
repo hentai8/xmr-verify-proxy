@@ -1,0 +1,38 @@
+{
+  "listen": "0.0.0.0:3333",
+  "upstream": "xmr.kryptex.network:7029",
+  "connectTimeoutMs": 15000,
+
+  "randomx": {
+    "fastMode": true,
+    "prebuildNextSeed": true,
+    "hugePages": false,
+    "datasetInitThreads": 0,
+    "vmPool": 4,
+    "maxCachedSeeds": 3
+  },
+
+  "verify": {
+    "checkHash": true,
+    "checkTarget": true,
+    "checkDuplicate": true,
+    "checkJobId": true,
+    "blockInvalidJobs": true,
+    "allowedAlgos": ["rx/0"],
+    "timeoutMs": 20000
+  },
+
+  "keepaliveSec": 60,
+  "maxJobsPerSession": 64,
+  "jobMaxAgeSec": 1800,
+
+  "stats": {
+    "enabled": true,
+    "listen": "127.0.0.1:3356"
+  },
+
+  "log": {
+    "level": "info",
+    "file": "logs/proxy.log"
+  }
+}

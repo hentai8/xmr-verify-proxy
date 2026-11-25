@@ -1,0 +1,28 @@
+# Build output
+build/
+build-avx2/
+dist/
+out/
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.exe
+
+# IDE / tooling
+.vs/
+.vscode/
+*.user
+*.suo
+CMakeUserPresets.json
+
+# Runtime artifacts
+config.json
+logs/
+test-logs/
+testbench/
+
+# Python
+__pycache__/
+*.pyc
