@@ -37,6 +37,35 @@ function Write-Both {
     if ($script:log) { Add-Content -Path $script:log -Value $Text -Encoding UTF8 }
 }
 
+function Show-ManualSteps {
+    $root = Split-Path -Parent $PSScriptRoot
+    Write-Host ""
+    Write-Host "Add these exclusions by hand instead:" -ForegroundColor Yellow
+    Write-Host "  1. Open Windows Security -> Virus & threat protection"
+    Write-Host "  2. Under 'Virus & threat protection settings' click 'Manage settings'"
+    Write-Host "  3. Scroll to 'Exclusions' -> 'Add or remove exclusions' -> 'Add an exclusion'"
+    Write-Host "  4. Choose 'Folder' and add:"
+    Write-Host "       $root" -ForegroundColor White
+    Write-Host "  5. Choose 'Process' and add:"
+    Write-Host "       xmrig.exe" -ForegroundColor White
+    Write-Host "       xmr-verify-proxy.exe" -ForegroundColor White
+}
+
+function Show-ThirdPartyAvHint {
+    $av = @()
+    try {
+        $av = @(Get-CimInstance -Namespace root\SecurityCenter2 -ClassName AntiVirusProduct -ErrorAction Stop |
+                Select-Object -ExpandProperty displayName)
+    } catch { }
+    $others = @($av | Where-Object { $_ -and $_ -notmatch 'Defender' })
+    Write-Host ""
+    Write-Host "Another antivirus is present on this machine:" -ForegroundColor Yellow
+    foreach ($o in $others) { Write-Host "  - $o" -ForegroundColor White }
+    Write-Host "Defender exclusions do not affect it. If xmrig.exe (or this proxy) disappears the"
+    Write-Host "moment it is launched, that product is blocking it - add the folder to ITS trust"
+    Write-Host "list, e.g. Huorong: 防护中心 -> 信任区 -> 添加目录 / 添加文件."
+}
+
 # ---------------------------------------------------------------------------
 # Elevate if needed
 # ---------------------------------------------------------------------------
@@ -87,21 +116,6 @@ $script:log = if ($ResultFile) { $ResultFile } else { Join-Path $root 'logs\defe
 New-Item -ItemType Directory -Force (Join-Path $root 'logs') | Out-Null
 Set-Content -Path $script:log -Value "xmr-verify-proxy Defender exclusions $(Get-Date -Format o)" -Encoding UTF8
 
-function Show-ManualSteps {
-    $root = Split-Path -Parent $PSScriptRoot
-    Write-Host ""
-    Write-Host "Add these exclusions by hand instead:" -ForegroundColor Yellow
-    Write-Host "  1. Open Windows Security -> Virus & threat protection"
-    Write-Host "  2. Under 'Virus & threat protection settings' click 'Manage settings'"
-    Write-Host "  3. Scroll to 'Exclusions' -> 'Add or remove exclusions' -> 'Add an exclusion'"
-    Write-Host "  4. Choose 'Folder' and add:"
-    Write-Host "       $root" -ForegroundColor White
-    Write-Host "  5. Choose 'Process' and add:"
-    Write-Host "       xmrig.exe" -ForegroundColor White
-    Write-Host "       xmr-verify-proxy.exe" -ForegroundColor White
-    Write-Host ""
-    Write-Host "Tamper Protection must be off for a script to do this; the UI always works." -ForegroundColor Yellow
-}
 
 Write-Both "project root: $root" 'Cyan'
 
@@ -203,8 +217,9 @@ if ($WithXmrig) {
     $exe = Join-Path $dir "xmrig-$XmrigVersion\xmrig.exe"
     Start-Sleep -Milliseconds 500
     if (-not (Test-Path $exe)) {
-        Write-Both "xmrig.exe disappeared right after extraction - the exclusion is not effective for it" 'Red'
+        Write-Both "xmrig.exe disappeared right after extraction" 'Red'
         Show-ManualSteps
+        Show-ThirdPartyAvHint
         exit 1
     }
     try {
@@ -215,7 +230,9 @@ if ($WithXmrig) {
         exit 1
     }
     if (-not (Test-Path $exe)) {
-        Write-Both "xmrig.exe was removed after trying to run it" 'Red'
+        Write-Both "xmrig.exe was deleted the moment it was executed." 'Red'
+        Write-Both "Defender reports no detection for it, so another security product is doing this." 'Yellow'
+        Show-ThirdPartyAvHint
         exit 1
     }
     Write-Both "XMRig is ready at: $exe" 'Green'
