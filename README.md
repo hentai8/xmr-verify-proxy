@@ -205,7 +205,7 @@ powershell -ExecutionPolicy Bypass -File .\tests\run-tests.ps1
 全部离线执行，不需要真矿池，也不产生任何真实提交。三组检查：
 
 1. **RandomX 正确性**：用 `tests/data/submit-vectors.json` 里 9 组被真实矿池接受过的 share，
-   逐组重算并要求逐字节相同（这组向量同时覆盖了 fast/light 两条路径）。
+   逐组重算并要求逐字节相同。测试脚本跑的是 fast 模式；`selftest --light` 可单独验证 light 路径。
 2. **job 校验**：内置假矿池下发 4 种结构非法的 job（blob 长度错、缺 `seed_hash`、`algo` 不是 `rx/0`、
    `target` 为零），断言它们一条都没到矿机手上，紧接着的合法 job 正常下发。
 3. **share 校验**：内置测试矿工对假矿池（`--easy` 把难度降到 3，秒出 share）依次提交
